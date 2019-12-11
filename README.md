@@ -1,6 +1,7 @@
 # bonsai_genericVideoRecorder
 
-Barebone video recorder workflow using Bonsai &amp; ffmpeg.
+Barebone video recorder workflow using Bonsai and ffmpeg.
+(Johannes Larsch 2019, based on instructions from Gonçalo Lopes, see forum post below)
 
 Strength: very fast real time video compression on modest hardware using any DirectShow Camera.  Extend with live tracking etc. using Bonsai environment.
 
