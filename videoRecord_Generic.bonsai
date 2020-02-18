@@ -1,24 +1,73 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<WorkflowBuilder Version="2.3.0">
-  <Workflow xmlns:q1="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:q2="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting" xmlns:q3="clr-namespace:Bonsai.Video;assembly=Bonsai.Video" xmlns="https://horizongir.org/bonsai">
+<WorkflowBuilder Version="2.4.1"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
+                 xmlns:scr="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
+                 xmlns:p1="clr-namespace:Bonsai.uEye;assembly=Bonsai.uEye"
+                 xmlns="https://bonsai-rx.org/2018/workflow">
+  <Workflow>
     <Nodes>
+      <Expression xsi:type="ExternalizedMapping">
+        <Property Name="video fps" />
+      </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q1:ImageWriter">
-          <q1:Path>\\.\pipe\p1</q1:Path>
-          <q1:Suffix>None</q1:Suffix>
-          <q1:Overwrite>false</q1:Overwrite>
+        <Combinator xsi:type="p1:uEyeCapture">
+          <p1:DeviceId xsi:nil="true" />
+          <p1:ConfigFile>2048x2048_30fps_1p5ms.ini</p1:ConfigFile>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="MemberSelector">
+        <Selector>Image</Selector>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="cv:BackgroundSubtraction">
+          <cv:BackgroundFrames>120</cv:BackgroundFrames>
+          <cv:AdaptationRate>0.0005</cv:AdaptationRate>
+          <cv:ThresholdValue>0</cv:ThresholdValue>
+          <cv:ThresholdType>ToZero</cv:ThresholdType>
+          <cv:SubtractionMethod>Dark</cv:SubtractionMethod>
         </Combinator>
       </Expression>
       <Expression xsi:type="NestedWorkflow">
         <Name>ffmpeg</Name>
         <Workflow>
           <Nodes>
-            <Expression xsi:type="q2:PythonSource">
-              <q2:Script>import datetime
+            <Expression xsi:type="scr:PythonSource">
+              <scr:Script>import datetime
 @returns(str)
 def generate():
   currentTime=datetime.datetime.now()
-  yield currentTime.strftime('%Y%m%d%H%M%S')</q2:Script>
+  yield currentTime.strftime('%Y%m%d%H%M%S')</scr:Script>
+            </Expression>
+            <Expression xsi:type="WorkflowInput">
+              <Name>Source1</Name>
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Width</Selector>
+            </Expression>
+            <Expression xsi:type="MemberSelector">
+              <Selector>Height</Selector>
+            </Expression>
+            <Expression xsi:type="WorkflowOutput" />
+            <Expression xsi:type="ExternalizedMapping">
+              <Property Name="Value" DisplayName="codec q" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="IntProperty">
+                <Value>5</Value>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="ExternalizedMapping">
+              <Property Name="Value" DisplayName="cam id" />
+            </Expression>
+            <Expression xsi:type="Combinator">
+              <Combinator xsi:type="IntProperty">
+                <Value>0</Value>
+              </Combinator>
+            </Expression>
+            <Expression xsi:type="ExternalizedMapping">
+              <Property Name="Value" DisplayName="video fps" />
             </Expression>
             <Expression xsi:type="Combinator">
               <Combinator xsi:type="IntProperty">
@@ -26,10 +75,10 @@ def generate():
               </Combinator>
             </Expression>
             <Expression xsi:type="Combinator">
-              <Combinator xsi:type="Zip" />
+              <Combinator xsi:type="rx:Zip" />
             </Expression>
-            <Expression xsi:type="q2:PythonTransform">
-              <q2:Script>import subprocess as sp
+            <Expression xsi:type="scr:PythonTransform">
+              <scr:Script>import subprocess as sp
 import datetime
 
 @returns(bool)
@@ -44,164 +93,40 @@ def process(inputs):
 
   cmd='c:\\ffmpeg\\bin\\ffmpeg.exe -y -f rawvideo -vcodec rawvideo -s '+vid_width+'x'+vid_height+' -r '+vid_rate+' -pix_fmt gray -i \\\\.\\pipe\\p1 -q:v '+codec_q+' -vcodec mpeg4 -vtag xvid d:\\data\\out_id'+cam_id+'_'+vid_rate+'fps'+'_'+currentTime+'.avi'
   sp.Popen(cmd)
-  return True</q2:Script>
-            </Expression>
-            <Expression xsi:type="WorkflowInput">
-              <Name>Source1</Name>
-            </Expression>
-            <Expression xsi:type="WorkflowOutput" />
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="IntProperty">
-                <Value>5</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="Combinator">
-              <Combinator xsi:type="IntProperty">
-                <Value>0</Value>
-              </Combinator>
-            </Expression>
-            <Expression xsi:type="ExternalizedPropertyOfInt32IntProperty">
-              <MemberName>Value</MemberName>
-              <Name>codec q</Name>
-              <Value>5</Value>
-            </Expression>
-            <Expression xsi:type="ExternalizedPropertyOfInt32IntProperty">
-              <MemberName>Value</MemberName>
-              <Name>cam id</Name>
-              <Value>0</Value>
-            </Expression>
-            <Expression xsi:type="ExternalizedPropertyOfInt32IntProperty">
-              <MemberName>Value</MemberName>
-              <Name>video fps</Name>
-              <Value>60</Value>
-            </Expression>
-            <Expression xsi:type="MemberSelector">
-              <Selector>Source.Width</Selector>
-            </Expression>
-            <Expression xsi:type="MemberSelector">
-              <Selector>Source.Height</Selector>
+  return True</scr:Script>
             </Expression>
           </Nodes>
           <Edges>
-            <Edge>
-              <From>0</From>
-              <To>2</To>
-              <Label>Source3</Label>
-            </Edge>
-            <Edge>
-              <From>1</From>
-              <To>2</To>
-              <Label>Source2</Label>
-            </Edge>
-            <Edge>
-              <From>2</From>
-              <To>3</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>4</From>
-              <To>11</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>4</From>
-              <To>12</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>4</From>
-              <To>5</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>6</From>
-              <To>2</To>
-              <Label>Source5</Label>
-            </Edge>
-            <Edge>
-              <From>7</From>
-              <To>2</To>
-              <Label>Source4</Label>
-            </Edge>
-            <Edge>
-              <From>8</From>
-              <To>6</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>9</From>
-              <To>7</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>10</From>
-              <To>1</To>
-              <Label>Source1</Label>
-            </Edge>
-            <Edge>
-              <From>11</From>
-              <To>2</To>
-              <Label>Source6</Label>
-            </Edge>
-            <Edge>
-              <From>12</From>
-              <To>2</To>
-              <Label>Source7</Label>
-            </Edge>
+            <Edge From="0" To="11" Label="Source3" />
+            <Edge From="1" To="2" Label="Source1" />
+            <Edge From="1" To="3" Label="Source1" />
+            <Edge From="1" To="4" Label="Source1" />
+            <Edge From="2" To="11" Label="Source6" />
+            <Edge From="3" To="11" Label="Source7" />
+            <Edge From="5" To="6" Label="Source1" />
+            <Edge From="6" To="11" Label="Source5" />
+            <Edge From="7" To="8" Label="Source1" />
+            <Edge From="8" To="11" Label="Source4" />
+            <Edge From="9" To="10" Label="Source1" />
+            <Edge From="10" To="11" Label="Source2" />
+            <Edge From="11" To="12" Label="Source1" />
           </Edges>
         </Workflow>
       </Expression>
       <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q1:BackgroundSubtraction">
-          <q1:BackgroundFrames>120</q1:BackgroundFrames>
-          <q1:AdaptationRate>0.0005</q1:AdaptationRate>
-          <q1:ThresholdValue>0</q1:ThresholdValue>
-          <q1:ThresholdType>ToZero</q1:ThresholdType>
-          <q1:SubtractionMethod>Dark</q1:SubtractionMethod>
-        </Combinator>
-      </Expression>
-      <Expression xsi:type="ExternalizedPropertyOfInt32IntProperty">
-        <MemberName>video fps</MemberName>
-        <Name>video fps</Name>
-        <Value>60</Value>
-      </Expression>
-      <Expression xsi:type="Combinator">
-        <Combinator xsi:type="q3:VideoCaptureDevice">
-          <q3:Index>0</q3:Index>
+        <Combinator xsi:type="cv:ImageWriter">
+          <cv:Path>\\.\pipe\p1</cv:Path>
+          <cv:Suffix>None</cv:Suffix>
+          <cv:Overwrite>false</cv:Overwrite>
         </Combinator>
       </Expression>
     </Nodes>
     <Edges>
-      <Edge>
-        <From>1</From>
-        <To>0</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>2</From>
-        <To>1</To>
-        <Label>Source1</Label>
-      </Edge>
-      <Edge>
-        <From>3</From>
-        <To>1</To>
-        <Label>Source2</Label>
-      </Edge>
-      <Edge>
-        <From>4</From>
-        <To>2</To>
-        <Label>Source1</Label>
-      </Edge>
+      <Edge From="0" To="4" Label="Source2" />
+      <Edge From="1" To="2" Label="Source1" />
+      <Edge From="2" To="3" Label="Source1" />
+      <Edge From="3" To="4" Label="Source1" />
+      <Edge From="4" To="5" Label="Source1" />
     </Edges>
   </Workflow>
-  <ExtensionTypes>
-    <Type>Bonsai.Vision.ImageWriter, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Scripting.PythonSource, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Expressions.IntProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Reactive.Zip, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Scripting.PythonTransform, Bonsai.Scripting, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Expressions.ExternalizedProperty`2[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[Bonsai.Expressions.IntProperty, Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null]], Bonsai.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Vision.BackgroundSubtraction, Bonsai.Vision, Version=2.3.0.0, Culture=neutral, PublicKeyToken=null</Type>
-    <Type>Bonsai.Video.VideoCaptureDevice, Bonsai.Video, Version=2.2.0.0, Culture=neutral, PublicKeyToken=null</Type>
-  </ExtensionTypes>
 </WorkflowBuilder>
