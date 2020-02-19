@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <WorkflowBuilder Version="2.4.1"
                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:p1="clr-namespace:Bonsai.uEye;assembly=Bonsai.uEye"
                  xmlns:cv="clr-namespace:Bonsai.Vision;assembly=Bonsai.Vision"
                  xmlns:scr="clr-namespace:Bonsai.Scripting;assembly=Bonsai.Scripting"
                  xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
-                 xmlns:p1="clr-namespace:Bonsai.uEye;assembly=Bonsai.uEye"
                  xmlns="https://bonsai-rx.org/2018/workflow">
   <Workflow>
     <Nodes>
@@ -14,7 +14,7 @@
       <Expression xsi:type="Combinator">
         <Combinator xsi:type="p1:uEyeCapture">
           <p1:DeviceId xsi:nil="true" />
-          <p1:ConfigFile>2048x2048_30fps_1p5ms.ini</p1:ConfigFile>
+          <p1:ConfigFile>2048x2048_30fps_1p5ms_downstairs.ini</p1:ConfigFile>
         </Combinator>
       </Expression>
       <Expression xsi:type="MemberSelector">
@@ -91,7 +91,7 @@ def process(inputs):
   cam_id=str(inputs.Item3)
   codec_q=str(inputs.Item4)
 
-  cmd='c:\\ffmpeg\\bin\\ffmpeg.exe -y -f rawvideo -vcodec rawvideo -s '+vid_width+'x'+vid_height+' -r '+vid_rate+' -pix_fmt gray -i \\\\.\\pipe\\p1 -q:v '+codec_q+' -vcodec mpeg4 -vtag xvid d:\\data\\out_id'+cam_id+'_'+vid_rate+'fps'+'_'+currentTime+'.avi'
+  cmd='c:\\ffmpeg\\bin\\ffmpeg.exe -y -f rawvideo -vcodec rawvideo -s '+vid_width+'x'+vid_height+' -r '+vid_rate+' -pix_fmt gray -i \\\\.\\pipe\\p1 -q:v '+codec_q+' -vcodec mpeg4 -vtag xvid E:\\00_bonsai_ffmpeg_out\\out_id'+cam_id+'_'+vid_rate+'fps'+'_'+currentTime+'.avi'
   sp.Popen(cmd)
   return True</scr:Script>
             </Expression>
